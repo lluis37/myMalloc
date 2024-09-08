@@ -1,0 +1,65 @@
+Contributors: Luis Rodriguez (lar322) and Chris O'Neill (cso40)
+
+Compilation and Running:
+    In order to compile memtest.c, simply type "make memtest" into the command line. 
+    In order to compile malloctest.c (a file containing various tests for mymalloc() 
+    and myfree()), simply type "make malloctest".
+    In order to run the various tests within malloctest, after compiling,
+    simply type "make test<#>" (where <#> is the specific test you want to 
+    run). A description of what each test # specifically tests is provided
+    within malloctest.c.
+
+Testing Plan:
+    Requirement 1: Error recieved if pointer passed to free() is not on heap
+        - Call free() on the address of an int variable n
+
+    Requirement 2: Error recieved if pointer passed to free() points to the middle of an object
+        - Create an int * variable called p and provide it with an address from malloc, then call free(p + 1)
+
+    Requirement 3: Error recieved if pointer passed to free() points to a header
+        - Get a pointer from malloc, then call free((char *) pointer - 24)
+
+    Requirement 4: Error received if memory is already free
+        - Get a pointer from malloc, then set another pointer equal to said pointer. Call free() on both pointers.
+
+    Requirement 5: free() coalesces memory
+        - Use malloc() to get four pointers to memory of size 1000 bytes each (to allocate all of memory).
+          Then call free() on the second pointer received from malloc, then on the fourth pointer received from,
+          malloc, and lastly on the third pointer received from malloc. Finally, use malloc() to get a pointer to
+          memory of size 3000 bytes. If the memory was properly coalesced, no error message should be received.
+
+    Requirement 6: free() deallocates objects
+        - Allocate all of memory using malloc(), deallocate all of it using free(), then attempt to allocate more
+          memory using malloc().
+
+    Requirement 7: Error received if requesting too many bytes from malloc()
+        - Call malloc(5000)
+
+    Requirement 8: Error received if requesting bytes from malloc() when all memory is allocated
+        - Get a pointer from malloc(4072), then attempt to get a pointer from malloc(100)
+        
+    Requirement 9: Make sure that memory from malloc() is 8-byte aligned
+        - Get a pointer from malloc(), then check if ( <the address receieved from malloc()> % 8 == 0 )
+
+Design Notes:
+    We chose to use a first fit strategy for dealing with our memory allocation. More specifically, when we malloc(), we scan the list of free blocks and allocate the first block that is large enough to accomodate the allocation request. We chose this strategy for allocation as we felt as though it was the easiest to implement, while also being efficient.
+    Moreover, we chose to conduct coalescence in our free() function because we felt as though it would be faster to do so instead of coalescing in our malloc() function. This is because when free() is called, if no errors occured, we know that memory has been freed, and therefore we should check to see if we can coalesce memory.
+
+Performance Testing:
+    The first of the two tests which we implemented is designed to test the speed of mymalloc() and myfree() through a pattern of increasing and then decreasing memory allocations/deallocations. That is to say, the test initially requests increasingly larger blocks of memory, then reverses the process by deallocating memory in the opposite order. Doing this helps to assess how quickly our program can allocate memory, as well as how quickly our program can coalesce free blocks of various size.
+    The second of the two tests, tests the allocator under random conditions, both in the size of memory requests and the order in which memory blocks are allocated and freed. This test helps us to determine how well our program can handle a random variety of allocations, deallocations, and sizes, as well as how efficiently our program can handle said random allocations and deallocations.
+
+Performance Test Results:
+    Using our malloc() and free():
+        Test 1: Average Time = 6.020000 microseconds
+        Test 2: Average Time = 93.500000 microseconds
+        Test 3: Average Time = 24.060000 microseconds
+        Test 4: Average Time = 0.040000 microseconds
+        Test 5: Average Time = 20.720000 microseconds
+
+    Using real malloc() and free():
+        Test 1: Single Allocation and Free: Average Time = 5.260000 microseconds
+        Test 2: Multiple Allocations and Frees: Average Time = 5.020000 microseconds
+        Test 3: Random Choice Allocation and Free: Average Time = 12.640000 microseconds
+        Test 4: Increasing and Decreasing Allocations: Average Time = 0.500000 microseconds
+        Test 5: Random Allocations and Frees: Average Time = 9.040000 microseconds
